@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 import cv2 as cv
 import numpy as np
 
@@ -25,6 +26,8 @@ def _cut(im, ax):
                 seg.append([start, i - 1, i - 1 - start])
                 start = -1
                 blank = True
+    if start != -1:
+        seg.append([start, len(im_h), len(im_h) - start])
     if len(seg) < 2:
         seg_new = seg
     else:
@@ -126,13 +129,19 @@ def char_cut(im, center_size, final_size):
     for row in row_list:
         col_list = _cut(row, ax=0)
         for col in col_list:
-            im_list.append(padding(col, center_size, final_size))
+            h, w = col.shape[:2]
+            if h / w > 2 or w / h > 2:
+                col_row_list = _cut(col, ax=1)
+                for col_row in col_row_list:
+                    im_list.append(padding(col_row, center_size, final_size))
+            else:
+                im_list.append(padding(col, center_size, final_size))
     return im_list
 
 
 def main():
-    im = cv.imread('image/2.jpg')
-    ims = char_cut(im, 370, 640)
+    im = cv.imread('image/9.jpg')
+    ims = char_cut(im, center_size=37, final_size=64)   # center_size 是汉字长边的最宽宽度，final_size是图片最终长宽
     for i, im in enumerate(ims):
         cv.imwrite('result/%d.jpg' % i, im)
 
